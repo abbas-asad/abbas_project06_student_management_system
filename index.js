@@ -6,17 +6,23 @@ class Student {
     name;
     coursesEnrolled;
     feesAmount;
+    balance;
+    feesPaid;
     constructor(id, name, coursesEnrolled, feesAmount) {
         this.id = id;
         this.name = name;
         this.coursesEnrolled = coursesEnrolled;
         this.feesAmount = feesAmount;
+        this.balance = feesAmount;
+        this.feesPaid = false;
     }
     displayInfo() {
         console.log(`\nStudent ID: ${this.id}`);
         console.log(`Name: ${this.name}`);
         console.log(`Courses Enrolled: ${this.coursesEnrolled.join(", ")}`);
-        console.log(`Total Fees: $${this.feesAmount}\n`);
+        console.log(`Total Fees: $${this.feesAmount}`);
+        console.log(`Balance: $${this.balance}`);
+        console.log(`Fees Paid: ${this.feesPaid ? "Yes" : "No"}\n`);
     }
 }
 // StudentManagementSystem class to handle operations
@@ -37,7 +43,7 @@ class StudentManagementSystem {
                 type: "list",
                 name: "action",
                 message: "Please select an option:",
-                choices: ["Enroll a Student", "Show Student Status", "Exit"]
+                choices: ["Enroll a Student", "Show Student Status", "Pay Fees", "Exit"]
             });
             switch (action.action) {
                 case "Enroll a Student":
@@ -45,6 +51,9 @@ class StudentManagementSystem {
                     break;
                 case "Show Student Status":
                     await this.showStudentStatus();
+                    break;
+                case "Pay Fees":
+                    await this.payFees();
                     break;
                 case "Exit":
                     console.log("Thank you for using the Student Management System!");
@@ -72,7 +81,7 @@ class StudentManagementSystem {
         }
         this.baseId++;
         const studentId = "STID" + this.baseId;
-        console.log(`\nYour account has been created. Welcome, ${studentName}!`);
+        console.log(`\nYour account has been created. Welcome, ${studentName}`);
         const courseChoices = this.courses.map(course => `${course.name} - $${course.fee}`);
         const courseAnswer = await inquirer.prompt({
             type: "list",
@@ -111,6 +120,40 @@ class StudentManagementSystem {
         if (selectedStudent) {
             console.log("\nStudent Information:");
             selectedStudent.displayInfo();
+        }
+        else {
+            console.log("Student not found.");
+        }
+    }
+    // Method to pay fees
+    async payFees() {
+        if (this.students.length === 0) {
+            console.log("No students enrolled yet.");
+            return;
+        }
+        const studentNames = this.students.map(student => student.name);
+        const selectedStudentAnswer = await inquirer.prompt({
+            type: "list",
+            name: "selectedStudent",
+            message: "Please select a student name:",
+            choices: studentNames
+        });
+        const selectedStudent = this.students.find(student => student.name === selectedStudentAnswer.selectedStudent);
+        if (selectedStudent) {
+            const paymentAmount = await inquirer.prompt({
+                type: "number",
+                name: "paymentAmount",
+                message: "Enter the amount to pay:"
+            });
+            if (paymentAmount.paymentAmount > selectedStudent.balance) {
+                console.log("Insufficient balance.");
+                return;
+            }
+            selectedStudent.balance -= paymentAmount.paymentAmount;
+            if (selectedStudent.balance === 0) {
+                selectedStudent.feesPaid = true;
+            }
+            console.log("Fees paid successfully.");
         }
         else {
             console.log("Student not found.");
